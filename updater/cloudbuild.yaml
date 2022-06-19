@@ -1,0 +1,29 @@
+steps:
+- id: build-image
+  name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'gcr.io/$PROJECT_ID/updater:1.0.0', '-f', 'updater/Dockerfile', '.']
+- id: push-image
+  name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/$PROJECT_ID/updater:1.0.0']
+- id: deploy
+  name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: gcloud
+  args:
+  - 'run'
+  - 'deploy'
+  - 'updater'
+  - '--image'
+  - 'gcr.io/$PROJECT_ID/updater:1.0.0'
+  - '--set-env-vars'
+  - >-
+    ^;^
+    REDIS_HOST=$_REDIS_HOST;
+    PROJECT_ID=$_PROJECT;
+    SECURITY_POLICY_NAME=$_SECURITY_POLICY_NAME;
+  - '--no-allow-unauthenticated'
+  - '--vpc-connector'
+  - '$_REDIS_CONNECTOR'
+  - '--project'
+  - '$_PROJECT'
+  - '--region'
+  - '$_REGION'
